@@ -1,0 +1,3 @@
+„Ist der freie Wille nur eine Illusion?“
+Die Kernfrage: Treffen wir tatsächlich freie Entscheidungen – oder ist jede Entscheidung bereits durch Gehirnzustände, Genetik, Erfahrungen und Naturgesetze festgelegt, bevor wir bewusst glauben, uns entschieden zu haben?
+Das Thema verbindet Neurowissenschaft, Philosophie, Psychologie, Physik und sogar Recht/Ethik. Daraus entstehen richtig schwierige Fragen: Wenn alles determiniert ist, kann ein Mensch überhaupt moralisch schuldig sein? Wenn Gehirnaktivität einer bewussten Entscheidung vorausgeht, wer ist dann eigentlich das „Ich“, das entscheidet? Und würde echte Zufälligkeit auf Quantenebene überhaupt freien Willen erzeugen – oder lediglich Zufall?
