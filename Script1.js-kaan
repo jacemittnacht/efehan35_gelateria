@@ -1,0 +1,22 @@
+const int MaxKugeln = 5;
+int anzahlKugeln = 3;
+
+void Start()
+{
+	var preisProkugel = 1.80f
+	public class KugelZaehler : MonoBehaviour
+{
+    const int MaxKugeln = 5;
+    int anzahlKugeln = 3;
+
+    void Start()
+    {
+        var preisProKugel = 1.80f;
+
+        float gesamtpreis = anzahlKugeln * preisProKugel;
+
+        Debug.Log("Anzahl Kugeln: " + anzahlKugeln);
+        Debug.Log("Maximale Kugeln: " + MaxKugeln);
+        Debug.Log("Gesamtpreis: " + gesamtpreis + " Euro");
+    }
+}
