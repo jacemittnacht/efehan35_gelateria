@@ -1,0 +1,509 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Marios Rezeptbuch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Baloo+2:wght@500;600;700;800&display=swap">
+<style>
+/* Layout: eine Spalte (max. 600px) – Kopfzeile, Kunde + Fortschritt, Geheimrezepte, Kombi-Anzeige (Chips × Mult), Hand, Aktionen. Overlays: Shop, Rezeptbuch, Start/Ende */
+:root{
+  --cream:#fff6e6; --paper:#fdebd3; --choc:#3b2417; --cocoa:#7a5a48; --straw:#ff5d73; --strawD:#c93a52; --pista:#5fa83a; --pistaL:#a5d46a; --lemon:#ffd84d; --ice:#7fd6f2; --gold:#f5b82e; --bg:#2f2033;
+  --display:"Lilita One","Arial Rounded MT Bold","Arial Black",sans-serif;
+  --body:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:radial-gradient(ellipse at 50% 0%,#4a3150,var(--bg) 70%);color:var(--cream);font-family:var(--body);overflow:hidden;user-select:none;-webkit-user-select:none}
+.app{height:100%;max-width:600px;margin:0 auto;padding-inline:12px;padding-block:calc(env(safe-area-inset-top,0px) + 10px) calc(env(safe-area-inset-bottom,0px) + 10px);display:flex;flex-direction:column;gap:8px;box-sizing:border-box}
+.top{display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:stretch}
+.tile{background:#ffffff12;border-radius:12px;padding:5px 10px;min-width:0}
+.tile small{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#d8c3d9}
+.tile b{font-family:var(--display);font-weight:400;font-size:20px;line-height:1.1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tile b.gold{color:var(--gold)}
+.cust{display:flex;gap:10px;align-items:center;background:var(--cream);color:var(--choc);border-radius:16px;padding:8px 12px}
+.face{flex:none;width:52px;height:52px;border-radius:50%;background:var(--fc,#ff5d73);position:relative;box-shadow:inset 0 -6px 0 #0002}
+.face::before{content:"";position:absolute;left:14px;top:12px;width:24px;height:24px;border-radius:50%;background:#e8b892}
+.face::after{content:"";position:absolute;left:13px;top:8px;width:26px;height:12px;border-radius:13px 13px 0 0;background:#3b2417}
+.face.boss::after{background:#1e1e28;height:9px;top:7px;width:30px;left:11px;border-radius:4px}
+.cinfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.cname{font-family:var(--display);font-size:19px;line-height:1}
+.bubble{font-size:14px;line-height:1.25;color:var(--cocoa)}
+.bubble.boss{color:var(--strawD);font-weight:700}
+.prog{height:12px;border-radius:6px;background:#3b24171f;overflow:hidden;position:relative}
+.prog b{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--pistaL),var(--lemon));transition:width .35s}
+.ptxt{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--choc)}
+.jokers{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.jk{position:relative;background:linear-gradient(160deg,#fff6e6,#f3dcc0);color:var(--choc);border-radius:10px;padding:5px 6px;min-height:66px;font-size:11px;line-height:1.15;cursor:pointer;border:2px solid #0000;min-width:0}
+.jk.empty{background:#ffffff0d;border:2px dashed #ffffff26;cursor:default}
+.jk .jn{font-family:var(--display);font-size:13px;line-height:1;margin-bottom:3px;color:var(--strawD)}
+.jk .js{font-weight:800;color:var(--pista)}
+.jk.trig{animation:bump .3s}
+.jk .sell{position:absolute;left:4px;right:4px;bottom:4px;border:0;border-radius:6px;background:var(--straw);color:#fff;font:800 11px var(--body);padding:3px;cursor:pointer}
+@keyframes bump{40%{transform:translateY(-6px) scale(1.06)}}
+.board{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.combo{display:flex;flex-direction:column;align-items:center;gap:4px}
+.cbname{font-family:var(--display);font-size:22px;line-height:1;min-height:22px}
+.cbname small{font-family:var(--body);font-size:13px;font-weight:800;color:#d8c3d9;margin-left:6px}
+.cm{display:flex;align-items:center;gap:8px}
+.chips,.multv{font-family:var(--display);font-size:28px;line-height:1;padding:6px 14px 4px;border-radius:12px;min-width:64px;text-align:center;font-variant-numeric:tabular-nums;color:#fff}
+.chips{background:var(--pista);box-shadow:0 4px 0 #3c7a22}
+.multv{background:var(--straw);box-shadow:0 4px 0 var(--strawD)}
+.cm .x{font-family:var(--display);font-size:24px;color:#d8c3d9}
+.bumpc{animation:bump .25s}
+.total{font-family:var(--display);font-size:26px;color:var(--lemon);min-height:28px;font-variant-numeric:tabular-nums}
+.played{display:flex;gap:6px;min-height:92px;align-items:center;justify-content:center}
+.hand{display:flex;justify-content:center;gap:4px;padding-top:16px;min-height:110px}
+.card{--fc:#fff;--fd:#ccc;position:relative;flex:0 1 66px;min-width:40px;aspect-ratio:66/92;max-height:92px;background:var(--cream);color:var(--choc);border-radius:10px;box-shadow:0 4px 0 #0005;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s;padding:4px 2px 6px;box-sizing:border-box}
+.card .v{position:absolute;left:5px;top:2px;font-family:var(--display);font-size:16px;line-height:1.1}
+.card .scoop{width:62%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 34% 30%,#ffffffa0 0 12%,transparent 13%),var(--fc);box-shadow:inset 0 -5px 0 var(--fd);position:relative;z-index:1}
+.card .cone{width:42%;aspect-ratio:1/1.1;margin-top:-12%;background:repeating-linear-gradient(45deg,#d99a52 0 4px,#c4823e 4px 6px);clip-path:polygon(0 0,100% 0,50% 100%)}
+.card .fn{font-size:10px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;margin-top:1px;color:var(--cocoa);white-space:nowrap;overflow:hidden;max-width:100%}
+.card.sel{transform:translateY(-16px);box-shadow:0 0 0 3px var(--lemon),0 6px 0 #0005}
+.card.score{transform:translateY(-8px) scale(1.08);box-shadow:0 0 0 3px var(--pistaL),0 6px 0 #0005}
+.card.debuff{filter:grayscale(.8) brightness(.8)}
+.card.debuff::after{content:"";position:absolute;inset:40% 10% auto;height:3px;background:var(--straw);transform:rotate(-30deg)}
+.pop{position:absolute;left:50%;top:-6px;transform:translate(-50%,-100%);font-family:var(--display);font-size:16px;padding:1px 7px;border-radius:7px;color:#fff;white-space:nowrap;animation:popup .7s forwards;pointer-events:none;z-index:5}
+.pop.c{background:var(--pista)} .pop.m{background:var(--straw)} .pop.g{background:var(--gold);color:var(--choc)}
+@keyframes popup{0%{opacity:0;transform:translate(-50%,-60%) scale(.6)}20%{opacity:1;transform:translate(-50%,-110%) scale(1.1)}100%{opacity:0;transform:translate(-50%,-180%)}}
+.actions{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
+.btn{appearance:none;border:0;border-radius:14px;font:400 19px var(--display);padding:11px 10px;cursor:pointer;color:#fff}
+.btn span{display:block;font-family:var(--body);font-size:12px;font-weight:800;letter-spacing:.06em;opacity:.9}
+.btn.serve{background:var(--pista);box-shadow:0 4px 0 #3c7a22}
+.btn.disc{background:var(--straw);box-shadow:0 4px 0 var(--strawD)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn:active:not(:disabled){transform:translateY(2px)}
+.mid{display:flex;flex-direction:column;gap:4px}
+.small{appearance:none;border:0;background:#ffffff18;color:var(--cream);font:800 12px var(--body);letter-spacing:.06em;text-transform:uppercase;padding:5px 9px;border-radius:8px;cursor:pointer}
+button:focus-visible{outline:3px solid var(--lemon);outline-offset:2px}
+.deckinfo{font-size:12px;color:#d8c3d9;text-align:center;font-variant-numeric:tabular-nums}
+.overlay{position:fixed;inset:0;display:grid;place-items:center;padding:16px;background:#1d1220cc;z-index:20}
+.sheet{width:min(560px,100%);max-height:100%;display:flex;flex-direction:column;background:var(--cream);color:var(--choc);border-radius:22px;overflow:hidden;box-shadow:0 30px 60px #0008}
+.drip{flex:none;height:22px;border-top:10px solid var(--straw);background:radial-gradient(circle at 10px 0,var(--straw) 11px,transparent 12px) 0 0/34px 22px repeat-x,var(--cream)}
+.drip.p{border-top-color:var(--pistaL);background:radial-gradient(circle at 10px 0,var(--pistaL) 11px,transparent 12px) 0 0/34px 22px repeat-x,var(--cream)}
+.drip.g{border-top-color:var(--gold);background:radial-gradient(circle at 10px 0,var(--gold) 11px,transparent 12px) 0 0/34px 22px repeat-x,var(--cream)}
+.sin{padding:6px 20px 20px;display:flex;flex-direction:column;gap:12px;overflow:auto;min-height:0}
+.eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--cocoa);font-weight:800}
+h1{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(36px,10vw,52px);line-height:.95;color:var(--straw);text-wrap:balance}
+h1 small{display:block;font-size:.4em;color:var(--choc)}
+h2{margin:0;font-family:var(--display);font-weight:400;font-size:30px;line-height:1;text-wrap:balance}
+.sin p{margin:0;font-size:16px;line-height:1.35;color:#5a3f30}
+.big{appearance:none;border:0;border-radius:14px;font:400 21px var(--display);padding:12px;cursor:pointer;background:var(--straw);color:#fff;box-shadow:0 4px 0 var(--strawD)}
+.big.alt{background:#f3e3c8;color:var(--choc);box-shadow:0 4px 0 #d9c3a0}
+.big:disabled{opacity:.45;cursor:default}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.shopgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.item{background:#fff;border:2px solid #f0dfc4;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.item .tag{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--cocoa)}
+.item .nm{font-family:var(--display);font-size:19px;line-height:1;color:var(--strawD)}
+.item .nm.r{color:var(--pista)}
+.item .ds{font-size:14px;line-height:1.25;color:#5a3f30;flex:1}
+.buy{appearance:none;border:0;border-radius:9px;background:var(--gold);color:var(--choc);font:800 14px var(--body);padding:7px;cursor:pointer}
+.buy:disabled{opacity:.4;cursor:default}
+.buy.done{background:#e8e0d4}
+.wallet{display:flex;gap:16px;flex-wrap:wrap;font-weight:700;font-size:16px}
+.wallet b{color:#b07a00}
+.payout{display:grid;grid-template-columns:1fr auto;gap:2px 12px;font-size:15px;background:#f3e3c8;border-radius:12px;padding:8px 12px;font-variant-numeric:tabular-nums}
+.payout b{text-align:right}
+.payout .sum{font-weight:800;border-top:1px solid #d9c3a0;padding-top:3px}
+table.book{width:100%;border-collapse:collapse;font-size:14px}
+.book th{text-align:left;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--cocoa);padding:4px}
+.book td{padding:6px 4px;border-top:1px solid #f0dfc4;vertical-align:top}
+.book td.n{font-family:var(--display);font-size:16px}
+.book td.c{color:var(--pista);font-weight:800;font-variant-numeric:tabular-nums}
+.book td.m{color:var(--strawD);font-weight:800;font-variant-numeric:tabular-nums}
+.book small{display:block;color:var(--cocoa);font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat{background:#f3e3c8;border-radius:12px;padding:8px 10px;min-width:0}
+.stat small{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--cocoa);font-weight:800}
+.stat b{font-family:var(--display);font-weight:400;font-size:20px;font-variant-numeric:tabular-nums}
+@media (max-width:420px){.jk{font-size:10px;padding:4px}.jk .jn{font-size:11px}.tile b{font-size:17px}.chips,.multv{font-size:24px;min-width:52px}}
+@media (prefers-reduced-motion:reduce){.pop,.jk.trig,.bumpc{animation:none}.card{transition:none}}
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="tile"><small id="dayLbl">Tag 1 · Kunde 1/3</small><b id="custTitle">Stammgast</b></div>
+    <div class="tile"><small>Ziel</small><b id="target">300</b></div>
+    <div class="tile"><small>Münzen</small><b class="gold" id="money">4</b></div>
+    <div class="tile"><small>Deck</small><b id="deckN">50</b></div>
+  </header>
+  <section class="cust">
+    <div class="face" id="face"></div>
+    <div class="cinfo">
+      <div class="cname" id="cname">Signor Bruno</div>
+      <div class="bubble" id="bubble">Eine schöne Portion, bitte!</div>
+      <div class="prog"><b id="progBar" style="width:0"></b></div>
+      <div class="ptxt" id="ptxt">0 / 300</div>
+    </div>
+  </section>
+  <section class="jokers" id="jokers"></section>
+  <section class="board">
+    <div class="combo">
+      <div class="cbname" id="cbname">Wähle bis zu 5 Kugeln</div>
+      <div class="cm"><span class="chips" id="chips">0</span><span class="x">×</span><span class="multv" id="multv">0</span></div>
+      <div class="total" id="total"></div>
+    </div>
+    <div class="played" id="played"></div>
+  </section>
+  <section class="hand" id="hand"></section>
+  <footer class="actions">
+    <button class="btn disc" id="discBtn" type="button">Wegwerfen<span id="discN">3 übrig</span></button>
+    <div class="mid">
+      <button class="small" id="sortF" type="button">Nach Sorte</button>
+      <button class="small" id="sortV" type="button">Nach Süße</button>
+      <button class="small" id="bookBtn" type="button">Rezeptbuch</button>
+    </div>
+    <button class="btn serve" id="serveBtn" type="button">Servieren<span id="serveN">4 übrig</span></button>
+  </footer>
+</div>
+
+<div class="overlay" id="menu">
+  <div class="sheet"><div class="drip"></div><div class="sin">
+    <div class="eyebrow">Marios Gelateria · Roguelike-Kartenspiel</div>
+    <h1>Marios Rezeptbuch<small>Jede Kugel zählt. Jedes Rezept verändert die Regeln.</small></h1>
+    <p>Deine Hand besteht aus Eiskugel-Karten in 5 Sorten mit einer Süße von 1 bis 10. Wähle bis zu 5 Kugeln und serviere sie als Becher. Die Kombination bestimmt Chips und Mult, die Süße der Kugeln kommt auf die Chips. Punkte = Chips × Mult.</p>
+    <p>Jeder Tag hat drei Kunden: Stammgast, Tourist und einen Kritiker mit Sonderregel. Erreichst du das Ziel, bekommst du Münzen für Marios Laden: Geheimrezepte verändern die Wertung, Rezeptkarten verbessern Kombinationen. Überstehe drei Tage.</p>
+    <button class="big" id="startBtn" type="button">Laden öffnen</button>
+    <p id="bestLine" style="font-size:14px;color:var(--cocoa)"></p>
+  </div></div>
+</div>
+
+<div class="overlay" id="shop" hidden>
+  <div class="sheet"><div class="drip p"></div><div class="sin">
+    <div class="eyebrow" id="shopEyebrow">Kunde bedient</div>
+    <h2>Marios Laden</h2>
+    <div class="payout" id="payout"></div>
+    <div class="wallet"><span>Münzen <b id="shopMoney">0</b></span><span id="jkCount">Geheimrezepte 0/5</span></div>
+    <div class="shopgrid" id="shopItems"></div>
+    <div class="row"><button class="big alt" id="rerollBtn" type="button">Neu würfeln (5)</button><button class="big" id="nextBtn" type="button">Nächster Kunde</button></div>
+  </div></div>
+</div>
+
+<div class="overlay" id="book" hidden>
+  <div class="sheet"><div class="drip g"></div><div class="sin">
+    <div class="eyebrow">Alle Kombinationen und ihre Stufe</div>
+    <h2>Rezeptbuch</h2>
+    <table class="book"><thead><tr><th>Kombination</th><th>Stufe</th><th>Chips</th><th>Mult</th></tr></thead><tbody id="bookBody"></tbody></table>
+    <p style="font-size:14px">Die Süße jeder gewerteten Kugel kommt zusätzlich auf die Chips. Geheimrezepte werden von links nach rechts ausgewertet.</p>
+    <button class="big alt" id="bookClose" type="button">Schließen</button>
+  </div></div>
+</div>
+
+<div class="overlay" id="end" hidden>
+  <div class="sheet"><div class="drip"></div><div class="sin">
+    <div class="eyebrow" id="endEyebrow">Lauf vorbei</div>
+    <h2 id="endTitle">Der Kunde ging hungrig</h2>
+    <p id="endText"></p>
+    <div class="stats">
+      <div class="stat"><small>Tag</small><b id="sDay">1</b></div>
+      <div class="stat"><small>Bester Becher</small><b id="sBest">0</b></div>
+      <div class="stat"><small>Kunden</small><b id="sCust">0</b></div>
+    </div>
+    <div class="row"><button class="big" id="restartBtn" type="button">Neuer Lauf</button><button class="big alt" id="endlessBtn" type="button" hidden>Endlos weiter</button></div>
+  </div></div>
+</div>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const RM=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const sleep=ms=>new Promise(r=>setTimeout(r,RM?ms*0.3:ms));
+const ri=n=>(Math.random()*n)|0;
+const fmt=n=>Math.round(n).toLocaleString('de-DE');
+const fmtM=m=>Number.isInteger(m)?String(m):m.toFixed(1).replace('.',',');
+
+// ================= Daten =================
+const FLAV=[
+  {name:'Vanille',c:'#f7e6b5',d:'#d9be7c'},
+  {name:'Erdbeere',c:'#ff7f98',d:'#d2506b'},
+  {name:'Pistazie',c:'#a5d46a',d:'#6f9e37'},
+  {name:'Schoko',c:'#8a5536',d:'#5a3220'},
+  {name:'Zitrone',c:'#ffe45c',d:'#d4b42a'},
+];
+const COMBOS=[
+  {id:'single',name:'Einzelkugel',desc:'Höchste Kugel zählt',chips:5,mult:1,ic:10,im:1},
+  {id:'pair',name:'Doppio',desc:'2 Kugeln gleicher Sorte',chips:10,mult:2,ic:15,im:1},
+  {id:'twopair',name:'Due Doppi',desc:'2× zwei gleiche Sorten',chips:20,mult:2,ic:20,im:1},
+  {id:'three',name:'Tris',desc:'3 Kugeln gleicher Sorte',chips:30,mult:3,ic:20,im:2},
+  {id:'straight',name:'Scala',desc:'5 Kugeln mit fortlaufender Süße',chips:30,mult:4,ic:30,im:3},
+  {id:'rainbow',name:'Arcobaleno',desc:'5 verschiedene Sorten',chips:35,mult:4,ic:15,im:2},
+  {id:'full',name:'Coppa Grande',desc:'3 + 2 gleiche Sorten',chips:40,mult:4,ic:25,im:2},
+  {id:'four',name:'Quattro',desc:'4 Kugeln gleicher Sorte',chips:60,mult:7,ic:30,im:3},
+  {id:'five',name:'Supremo',desc:'5 Kugeln gleicher Sorte',chips:100,mult:8,ic:35,im:3},
+  {id:'rstraight',name:'Arcobaleno-Scala',desc:'5 Sorten mit fortlaufender Süße',chips:120,mult:10,ic:40,im:4},
+];
+const CI=Object.fromEntries(COMBOS.map((c,i)=>[c.id,i]));
+const JOKERS={
+  nonna:{name:'Nonnas Löffel',desc:'+4 Mult',price:3},
+  pista:{name:'Pistazienliebe',desc:'+3 Mult je gewerteter Pistazie',price:5},
+  choco:{name:'Schokosucht',desc:'+25 Chips je gewerteter Schoko',price:5},
+  lemon:{name:'Zitronenfrische',desc:'×1,5 Mult, wenn eine Zitrone gewertet wird',price:6},
+  straw:{name:'Erdbeerglück',desc:'Erdbeeren geben doppelte Süße',price:4},
+  small:{name:'Kleiner Becher',desc:'+60 Chips bei genau 3 servierten Kugeln',price:4},
+  doppio:{name:'Doppio-Fan',desc:'+8 Mult, wenn ein Doppio enthalten ist',price:5},
+  rainbow:{name:'Regenbogenstreusel',desc:'×2 Mult bei Arcobaleno',price:7},
+  thrift:{name:'Sparsamkeit',desc:'+30 Chips je übrigem Wegwerfen',price:5},
+  midnight:{name:'Mitternachtsdiele',desc:'+2 Mult je Geheimrezept',price:6},
+  cream:{name:'Sahnehaube',desc:'Letzte gewertete Kugel zählt doppelt',price:6},
+  kasse:{name:'Gelato-Kasse',desc:'+3 Münzen nach jedem Kunden',price:5},
+  heat:{name:'Hitzewelle',desc:'×3 Mult beim letzten Servieren',price:8},
+  sugar:{name:'Zuckerrausch',desc:'+1 Mult je 10 Süße der gewerteten Kugeln',price:5},
+  tower:{name:'Wachsender Turm',desc:'+1 Mult dauerhaft bei jedem Tris oder besser',price:6},
+  vanilla:{name:'Vanille-Basis',desc:'+15 Chips je Vanille, die in der Hand bleibt',price:5},
+};
+const BOSSES=[
+  {name:'Signora Severa',rule:'noChoco',text:'„Schokolade? Bitte nicht.“ Schoko-Kugeln zählen nicht.'},
+  {name:'Il Critico',rule:'three',text:'„Ich habe nicht ewig Zeit.“ Nur 3× Servieren.'},
+  {name:'Mario persönlich',rule:'sweet',text:'„Zu süß ist nicht ausgewogen.“ Süße über 6 gibt keine Chips.'},
+];
+const REGULARS=[['Signor Bruno','#2f7d6d','Eine schöne Portion, bitte!'],['Lucia','#9b6bb3','Überrasch mich!'],['Herr Kowalski','#7fd6f2','Was ist heute gut?']];
+const TOURISTS=[['Touristin Emma','#f5b82e','Ich will das beste Eis der Stadt!'],['Familie Jansen','#8cc63f','Vier Becher, aber mit allem!'],['Mr. Hughes','#ff5d73','Is this the famous Gelato?']];
+const BASE=[300,800,2000,5000,11000,20000,35000,50000];
+const HAND=8,MAXSEL=5,MAXJ=5;
+
+// ================= Zustand =================
+let R; // Run
+let busy=false,sel=new Set(),sortMode='f';
+let bestDay=0;try{bestDay=+localStorage.getItem('rezeptbuch_bestday')||0}catch(e){}
+function newRun(){
+  R={day:1,ci:0,money:4,jokers:[],levels:Object.fromEntries(COMBOS.map(c=>[c.id,1])),score:0,target:0,
+     serves:4,discards:3,deck:[],hand:[],boss:null,best:0,served:0,endless:false,shop:[],rerollCost:5};
+  startCustomer();
+}
+function buildDeck(){const d=[];let id=0;for(let f=0;f<5;f++)for(let v=1;v<=10;v++)d.push({id:id++,f,v});for(let i=d.length-1;i>0;i--){const j=ri(i+1);[d[i],d[j]]=[d[j],d[i]];}return d;}
+function startCustomer(){
+  const base=BASE[R.day-1]??BASE[BASE.length-1]*Math.pow(1.6,R.day-BASE.length);
+  R.target=Math.round(base*[1,1.5,2][R.ci]);
+  R.score=0;R.serves=4;R.discards=3;R.deck=buildDeck();R.hand=[];sel.clear();
+  R.boss=R.ci===2?BOSSES[(R.day-1)%BOSSES.length]:null;
+  if(R.boss&&R.boss.rule==='three')R.serves=3;
+  const pool=R.ci===0?REGULARS:TOURISTS;const pick=pool[ri(pool.length)];
+  R.cust=R.boss?{name:R.boss.name,c:'#3b2417',text:R.boss.text}:{name:pick[0],c:pick[1],text:pick[2]};
+  draw();renderAll();
+}
+function draw(){while(R.hand.length<HAND&&R.deck.length)R.hand.push(R.deck.pop());sortHand();}
+function sortHand(){R.hand.sort(sortMode==='f'?(a,b)=>a.f-b.f||b.v-a.v:(a,b)=>b.v-a.v||a.f-b.f);}
+
+// ================= Wertung =================
+function evaluate(cards){
+  const n=cards.length,g={};
+  for(const c of cards)(g[c.f]=g[c.f]||[]).push(c);
+  const groups=Object.values(g).sort((a,b)=>b.length-a.length||Math.max(...b.map(c=>c.v))-Math.max(...a.map(c=>c.v)));
+  const vals=[...new Set(cards.map(c=>c.v))].sort((a,b)=>a-b);
+  const straight=n===5&&vals.length===5&&vals[4]-vals[0]===4;
+  const rainbow=n===5&&groups.length===5;
+  const s0=groups[0]?groups[0].length:0,s1=groups[1]?groups[1].length:0;
+  let id,sc;
+  if(rainbow&&straight){id='rstraight';sc=cards;}
+  else if(s0===5){id='five';sc=cards;}
+  else if(s0===4){id='four';sc=groups[0];}
+  else if(s0===3&&s1===2){id='full';sc=cards;}
+  else if(rainbow){id='rainbow';sc=cards;}
+  else if(straight){id='straight';sc=cards;}
+  else if(s0===3){id='three';sc=groups[0];}
+  else if(s0===2&&s1===2){id='twopair';sc=[...groups[0],...groups[1]];}
+  else if(s0===2){id='pair';sc=groups[0];}
+  else{id='single';sc=[cards.reduce((a,b)=>b.v>a.v?b:a)];}
+  return{id,scoring:cards.filter(c=>sc.includes(c)),maxGroup:s0};
+}
+function comboVals(id){const c=COMBOS[CI[id]],l=R.levels[id]-1;return{chips:c.chips+c.ic*l,mult:c.mult+c.im*l};}
+const debuffed=c=>R.boss&&R.boss.rule==='noChoco'&&c.f===3;
+function cardChips(c){
+  if(debuffed(c))return 0;
+  if(R.boss&&R.boss.rule==='sweet'&&c.v>6)return 0;
+  return c.v*(c.f===1&&has('straw')?2:1);
+}
+const has=k=>R.jokers.some(j=>j.k===k);
+
+// ================= Rendering =================
+const cardHTML=c=>`<div class="card${sel.has(c.id)?' sel':''}${debuffed(c)?' debuff':''}" data-id="${c.id}" style="--fc:${FLAV[c.f].c};--fd:${FLAV[c.f].d}" role="button" tabindex="0" aria-label="${FLAV[c.f].name} ${c.v}"><span class="v">${c.v}</span><div class="scoop"></div><div class="cone"></div><span class="fn">${FLAV[c.f].name}</span></div>`;
+function jokerHTML(j,i){
+  const d=JOKERS[j.k];const extra=j.k==='tower'?`<div class="js">aktuell +${j.m} Mult</div>`:'';
+  return `<div class="jk" data-j="${i}" tabindex="0"><div class="jn">${d.name}</div><div>${d.desc}</div>${extra}${openJ===i?`<button class="sell" data-sell="${i}" type="button">Verkaufen (${Math.floor(d.price/2)})</button>`:''}</div>`;
+}
+let openJ=-1;
+function renderJokers(){let h='';for(let i=0;i<MAXJ;i++)h+=R.jokers[i]?jokerHTML(R.jokers[i],i):'<div class="jk empty"></div>';$('jokers').innerHTML=h;}
+function renderHand(){$('hand').innerHTML=R.hand.map(cardHTML).join('');}
+function renderTop(){
+  $('dayLbl').textContent=`Tag ${R.day} · Kunde ${R.ci+1}/3`;
+  $('custTitle').textContent=['Stammgast','Tourist','Kritiker'][R.ci];
+  $('target').textContent=fmt(R.target);$('money').textContent=R.money;$('deckN').textContent=R.deck.length;
+  $('cname').textContent=R.cust.name;$('bubble').textContent=R.cust.text;$('bubble').classList.toggle('boss',!!R.boss);
+  $('face').style.setProperty('--fc',R.cust.c);$('face').classList.toggle('boss',!!R.boss);
+  $('progBar').style.width=Math.min(100,R.score/R.target*100)+'%';$('ptxt').textContent=`${fmt(R.score)} / ${fmt(R.target)}`;
+  $('serveN').textContent=`${R.serves} übrig`;$('discN').textContent=`${R.discards} übrig`;
+  $('serveBtn').disabled=busy||sel.size===0||R.serves<=0;
+  $('discBtn').disabled=busy||sel.size===0||R.discards<=0;
+}
+function renderPreview(){
+  if(busy)return;
+  const cards=R.hand.filter(c=>sel.has(c.id));
+  if(!cards.length){$('cbname').innerHTML='Wähle bis zu 5 Kugeln';$('chips').textContent='0';$('multv').textContent='0';return;}
+  const ev=evaluate(cards),v=comboVals(ev.id);
+  $('cbname').innerHTML=`${COMBOS[CI[ev.id]].name}<small>Stufe ${R.levels[ev.id]}</small>`;
+  $('chips').textContent=v.chips;$('multv').textContent=v.mult;
+  for(const el of $('hand').children){const c=R.hand.find(x=>x.id==el.dataset.id);el.classList.toggle('score',sel.has(c.id)&&ev.scoring.includes(c));el.classList.toggle('sel',sel.has(c.id));}
+}
+function renderAll(){renderTop();renderJokers();renderHand();renderPreview();$('played').innerHTML='';$('total').textContent='';}
+
+// ================= Effekte =================
+function pop(el,text,cls){if(!el)return;const s=document.createElement('span');s.className='pop '+cls;s.textContent=text;el.appendChild(s);setTimeout(()=>s.remove(),750);}
+function bumpEl(el){el.classList.remove('bumpc');void el.offsetWidth;el.classList.add('bumpc');}
+function trig(i){const el=$('jokers').children[i];if(!el)return null;el.classList.remove('trig');void el.offsetWidth;el.classList.add('trig');return el;}
+function countUp(from,to,ms){return new Promise(res=>{const t0=performance.now();const step=t=>{const k=Math.min(1,(t-t0)/(RM?ms*0.3:ms));const v=from+(to-from)*(1-Math.pow(1-k,3));$('ptxt').textContent=`${fmt(v)} / ${fmt(R.target)}`;$('progBar').style.width=Math.min(100,v/R.target*100)+'%';k<1?requestAnimationFrame(step):res();};requestAnimationFrame(step);});}
+
+// ================= Aktionen =================
+async function serve(){
+  if(busy||!sel.size||R.serves<=0)return;
+  busy=true;openJ=-1;renderJokers();
+  const played=R.hand.filter(c=>sel.has(c.id));
+  R.hand=R.hand.filter(c=>!sel.has(c.id));sel.clear();
+  renderHand();$('played').innerHTML=played.map(cardHTML).join('');renderTop();
+  const ev=evaluate(played),base=comboVals(ev.id);
+  const S={chips:base.chips,mult:base.mult,scoring:ev.scoring.filter(c=>!debuffed(c)),played,combo:ev.id,maxGroup:ev.maxGroup,lastServe:R.serves===1};
+  const chipsEl=$('chips'),multEl=$('multv');
+  const upd=()=>{chipsEl.textContent=fmt(S.chips);multEl.textContent=fmtM(Math.round(S.mult*10)/10);};
+  $('cbname').innerHTML=`${COMBOS[CI[ev.id]].name}<small>Stufe ${R.levels[ev.id]}</small>`;upd();
+  await sleep(380);
+  const pEls=[...$('played').children];
+  const elOf=c=>pEls[played.indexOf(c)];
+  for(const el of pEls){const c=played.find(x=>x.id==el.dataset.id);if(ev.scoring.includes(c))el.classList.add('score');}
+  // Kugeln einzeln werten
+  const scoreCard=async c=>{
+    const el=elOf(c),v=cardChips(c);
+    S.chips+=v;upd();bumpEl(chipsEl);pop(el,'+'+v,'c');await sleep(300);
+    for(let i=0;i<R.jokers.length;i++){const k=R.jokers[i].k;let t=null;
+      if(k==='pista'&&c.f===2){S.mult+=3;t=['+3 Mult','m'];}
+      if(k==='choco'&&c.f===3){S.chips+=25;t=['+25','c'];}
+      if(t){upd();pop(trig(i),t[0],t[1]);pop(el,t[0],t[1]);bumpEl(t[1]==='m'?multEl:chipsEl);await sleep(300);}
+    }
+  };
+  for(const c of S.scoring)await scoreCard(c);
+  if(has('cream')&&S.scoring.length){const i=R.jokers.findIndex(j=>j.k==='cream');pop(trig(i),'Nochmal!','g');await sleep(250);await scoreCard(S.scoring[S.scoring.length-1]);}
+  // Geheimrezepte (von links nach rechts)
+  const sumV=S.scoring.reduce((a,c)=>a+cardChips(c),0);
+  for(let i=0;i<R.jokers.length;i++){
+    const j=R.jokers[i],k=j.k;let t=null;
+    if(k==='nonna'){S.mult+=4;t=['+4 Mult','m'];}
+    else if(k==='lemon'&&S.scoring.some(c=>c.f===4)){S.mult*=1.5;t=['×1,5 Mult','m'];}
+    else if(k==='small'&&played.length===3){S.chips+=60;t=['+60','c'];}
+    else if(k==='doppio'&&S.maxGroup>=2){S.mult+=8;t=['+8 Mult','m'];}
+    else if(k==='rainbow'&&(S.combo==='rainbow'||S.combo==='rstraight')){S.mult*=2;t=['×2 Mult','m'];}
+    else if(k==='thrift'&&R.discards>0){S.chips+=30*R.discards;t=['+'+30*R.discards,'c'];}
+    else if(k==='midnight'){S.mult+=2*R.jokers.length;t=['+'+2*R.jokers.length+' Mult','m'];}
+    else if(k==='heat'&&S.lastServe){S.mult*=3;t=['×3 Mult','m'];}
+    else if(k==='sugar'&&sumV>=10){const m=Math.floor(sumV/10);S.mult+=m;t=['+'+m+' Mult','m'];}
+    else if(k==='vanilla'){const n=R.hand.filter(c=>c.f===0).length;if(n){S.chips+=15*n;t=['+'+15*n,'c'];}}
+    else if(k==='tower'){if(CI[S.combo]>=CI.three){j.m++;}if(j.m){S.mult+=j.m;t=['+'+j.m+' Mult','m'];}}
+    if(t){upd();pop(trig(i),t[0],t[1]);bumpEl(t[1]==='m'?multEl:chipsEl);await sleep(340);}
+  }
+  renderJokers();
+  const total=Math.round(S.chips*S.mult);
+  $('total').textContent='= '+fmt(total);bumpEl($('total'));
+  await sleep(350);
+  const from=R.score;R.score+=total;R.best=Math.max(R.best,total);R.serves--;
+  await countUp(from,R.score,600);
+  await sleep(300);
+  $('played').innerHTML='';$('total').textContent='';
+  draw();busy=false;renderAll();
+  if(R.score>=R.target){await sleep(200);customerDone();}
+  else if(R.serves<=0)gameOver();
+}
+async function discard(){
+  if(busy||!sel.size||R.discards<=0)return;
+  R.hand=R.hand.filter(c=>!sel.has(c.id));sel.clear();R.discards--;draw();renderAll();
+}
+
+// ================= Laden =================
+function customerDone(){
+  R.served++;
+  const base=[3,4,5][R.ci],rest=R.serves,interest=Math.min(5,Math.floor(R.money/5)),kasse=has('kasse')?3:0;
+  const sum=base+rest+interest+kasse;R.money+=sum;
+  $('payout').innerHTML=`<span>Kunde bedient</span><b>+${base}</b><span>Übrige Servier-Aktionen</span><b>+${rest}</b><span>Zinsen (1 je 5 Münzen, max. 5)</span><b>+${interest}</b>${kasse?'<span>Gelato-Kasse</span><b>+3</b>':''}<span class="sum">Gesamt</span><b class="sum">+${sum}</b>`;
+  const bossWin=R.ci===2;
+  $('shopEyebrow').textContent=bossWin?`Tag ${R.day} geschafft – ${R.boss.name} ist zufrieden`:`${R.cust.name} ist zufrieden`;
+  if(bossWin&&R.day===3&&!R.endless){win();return;}
+  R.rerollCost=5;rollShop();openShop();
+}
+function rollShop(){
+  const own=new Set(R.jokers.map(j=>j.k)),pool=Object.keys(JOKERS).filter(k=>!own.has(k));
+  const items=[];
+  for(let i=0;i<2&&pool.length;i++){const k=pool.splice(ri(pool.length),1)[0];items.push({type:'j',k,price:JOKERS[k].price});}
+  const c=COMBOS[ri(COMBOS.length)];items.push({type:'r',id:c.id,price:3});
+  R.shop=items;
+}
+function renderShop(){
+  $('shopMoney').textContent=R.money;$('jkCount').textContent=`Geheimrezepte ${R.jokers.length}/${MAXJ}`;
+  $('shopItems').innerHTML=R.shop.map((it,i)=>{
+    if(it.type==='j'){const d=JOKERS[it.k],full=R.jokers.length>=MAXJ;
+      return `<div class="item"><span class="tag">Geheimrezept</span><div class="nm">${d.name}</div><div class="ds">${d.desc}</div><button class="buy${it.sold?' done':''}" data-buy="${i}" type="button" ${it.sold||R.money<it.price||full?'disabled':''}>${it.sold?'Gekauft':full?'Kein Platz':'Kaufen · '+it.price}</button></div>`;}
+    const c=COMBOS[CI[it.id]];
+    return `<div class="item"><span class="tag">Rezeptkarte</span><div class="nm r">${c.name}</div><div class="ds">Stufe ${R.levels[it.id]} → ${R.levels[it.id]+1}: +${c.ic} Chips, +${c.im} Mult</div><button class="buy${it.sold?' done':''}" data-buy="${i}" type="button" ${it.sold||R.money<it.price?'disabled':''}>${it.sold?'Gelernt':'Kaufen · '+it.price}</button></div>`;
+  }).join('');
+  $('rerollBtn').textContent=`Neu würfeln (${R.rerollCost})`;$('rerollBtn').disabled=R.money<R.rerollCost;
+}
+function openShop(){renderShop();$('shop').hidden=false;}
+$('shopItems').addEventListener('click',e=>{
+  const b=e.target.closest('[data-buy]');if(!b||b.disabled)return;
+  const it=R.shop[+b.dataset.buy];if(it.sold||R.money<it.price)return;
+  if(it.type==='j'){if(R.jokers.length>=MAXJ)return;R.jokers.push({k:it.k,m:0});}else R.levels[it.id]++;
+  R.money-=it.price;it.sold=true;renderShop();
+});
+$('rerollBtn').onclick=()=>{if(R.money<R.rerollCost)return;R.money-=R.rerollCost;R.rerollCost++;rollShop();renderShop();};
+$('nextBtn').onclick=()=>{$('shop').hidden=true;if(R.ci===2){R.day++;R.ci=0;}else R.ci++;startCustomer();};
+
+// ================= Ende =================
+function saveBest(){if(R.day>bestDay){bestDay=R.day;try{localStorage.setItem('rezeptbuch_bestday',bestDay)}catch(e){}}}
+function gameOver(){
+  saveBest();
+  $('endEyebrow').textContent=R.boss?`${R.boss.name} war nicht überzeugt`:'Lauf vorbei';
+  $('endTitle').textContent=`${R.cust.name} ging hungrig`;
+  $('endText').textContent=`Es fehlten ${fmt(R.target-R.score)} Punkte. Neue Geheimrezepte und andere Kombinationen probieren.`;
+  $('sDay').textContent=R.day;$('sBest').textContent=fmt(R.best);$('sCust').textContent=R.served;
+  $('endlessBtn').hidden=true;$('end').hidden=false;
+}
+function win(){
+  saveBest();
+  $('endEyebrow').textContent='Drei Tage überstanden';
+  $('endTitle').textContent='Mario ist stolz!';
+  $('endText').textContent='Du hast das Rezeptbuch gemeistert. Im Endlosmodus steigen die Ziele weiter.';
+  $('sDay').textContent=R.day;$('sBest').textContent=fmt(R.best);$('sCust').textContent=R.served;
+  $('endlessBtn').hidden=false;$('end').hidden=false;
+}
+$('endlessBtn').onclick=()=>{$('end').hidden=true;R.endless=true;R.rerollCost=5;rollShop();openShop();};
+$('restartBtn').onclick=()=>{$('end').hidden=true;newRun();};
+
+// ================= Eingabe =================
+$('hand').addEventListener('click',e=>{
+  const el=e.target.closest('.card');if(!el||busy)return;
+  const id=+el.dataset.id;
+  if(sel.has(id))sel.delete(id);else if(sel.size<MAXSEL)sel.add(id);
+  renderPreview();renderTop();
+});
+$('hand').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.target.click();}});
+$('jokers').addEventListener('click',e=>{
+  const s=e.target.closest('[data-sell]');
+  if(s){if(busy)return;const i=+s.dataset.sell,j=R.jokers[i];R.money+=Math.floor(JOKERS[j.k].price/2);R.jokers.splice(i,1);openJ=-1;renderJokers();renderTop();return;}
+  const j=e.target.closest('[data-j]');if(!j)return;const i=+j.dataset.j;openJ=openJ===i?-1:i;renderJokers();
+});
+$('serveBtn').onclick=serve;$('discBtn').onclick=discard;
+$('sortF').onclick=()=>{sortMode='f';sortHand();renderHand();renderPreview();};
+$('sortV').onclick=()=>{sortMode='v';sortHand();renderHand();renderPreview();};
+$('bookBtn').onclick=()=>{
+  $('bookBody').innerHTML=COMBOS.map(c=>{const v=comboVals(c.id);return `<tr><td class="n">${c.name}<small>${c.desc}</small></td><td>${R.levels[c.id]}</td><td class="c">${v.chips}</td><td class="m">${v.mult}</td></tr>`;}).slice().reverse().join('');
+  $('book').hidden=false;};
+$('bookClose').onclick=()=>{$('book').hidden=true;};
+addEventListener('keydown',e=>{
+  if(!$('menu').hidden&&e.key==='Enter'){e.preventDefault();$('startBtn').click();return;}
+  if(!$('menu').hidden||!$('shop').hidden||!$('end').hidden||!$('book').hidden)return;
+  if(e.key==='Enter'){e.preventDefault();serve();}
+  else if(e.key==='Backspace'||e.key==='d'||e.key==='D'){e.preventDefault();discard();}
+  else if(/^[1-8]$/.test(e.key)){const c=R.hand[+e.key-1];if(c&&!busy){if(sel.has(c.id))sel.delete(c.id);else if(sel.size<MAXSEL)sel.add(c.id);renderPreview();renderTop();}}
+});
+$('startBtn').onclick=()=>{$('menu').hidden=true;};
+$('bestLine').textContent=bestDay?`Weitester Lauf bisher: Tag ${bestDay}`:'Tasten: 1–8 auswählen, Enter servieren, D wegwerfen.';
+
+newRun();
+})();
+</script>
+
+</body></html>
